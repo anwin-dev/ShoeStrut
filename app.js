@@ -1,71 +1,95 @@
 const express = require("express");
 const path = require("path");
-const session = require("express-session");
-const nocache = require("nocache");
 const mongoose = require("mongoose");
+const session = require("express-session");
 const adminRouter = require("./router/admin");
 const userRouter = require("./router/user");
-const shopRouter = require("./router/shop")
-const AdminProductRouter = require("./router/AdminProduct")
-const nodemailer = require("nodemailer");
-const generateOTP = require("generate-otp");
-const dotenv = require('dotenv').config();
-const PORT = process.env.PORT;
+const shopRouter = require("./router/shop");
+const AdminProductRouter = require("./router/AdminProduct");
+require("dotenv").config();
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
+const PORT = process.env.PORT || 7000;
 const app = express();
 
-app.use(nocache());
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ||
+  "http://localhost:5173,http://localhost:5174"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-mongoose.connect('mongodb+srv://manikandan:Manu8086@cluster0.dut93mh.mongodb.net/ShoeStrut');
+const mongoUrl =
+  process.env.MONGO_URL || "mongodb://127.0.0.1:27017/ShoeStrut";
 
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "MOngodb error"));
-db.once("open", () => {
-  console.log("connected");
-});     
- 
-app.use(express.json());
-// session created
+mongoose
+  .connect(mongoUrl)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err.message));
+
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 app.use(
-  session({ 
-    name: "session",
-    secret: "password", 
-    resave: false,
-    saveUninitialized: true,
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+    credentials: true,
   })
 );
-//nocache controller
-app.use((req, res, next) => {
-  res.header("Cache-Control", "no-store,no-cache,private,must-revalidate");
-  next();
-});
-
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "Public")));
-app.use("/", userRouter);
-app.use("/admin", adminRouter);
-app.use("/product",shopRouter)
-app.use("/admin/product",AdminProductRouter)
+app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || "stepstyle-local-session",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+  })
+);
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:7000');
-  next();
+app.get("/health", (req, res) => {
+  res.status(200).json({ success: true, message: "StepStyle API is running" });
 });
+
+app.use(express.static(path.join(__dirname, "Public")));
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
+
+app.use("/api/user", userRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/product", shopRouter);
+app.use("/api/admin/product", AdminProductRouter);
 
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+  res.status(404).json({ success: false, message: "API Route Not Found" });
 });
 
-app.use((error,req, res,next) => {
-  console.log(error)
-  console.log(error.message)
-  res.status(error.status || 500);
-  res.render("404page");
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(error.status || 500).json({
+    success: false,
+    message: error.message || "Internal Server Error"
+  });
 });
 
 
 
-app.listen(PORT, console.log(`server is running in ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`server is running on port ${PORT}`);
+});

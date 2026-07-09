@@ -6,8 +6,8 @@ const CouponController = require('../controller/coupon')
 const { route } = require('./admin')
 const {userAuthentication}=require('../middleware/userAuth')
 
-//profile details
-router.get('/details/:id',userAuthentication,UserProductController.productDetailsGet)
+// Product details & shop listing are public (catalog browsing)
+router.get('/details/:id',UserProductController.productDetailsGet)
 
 router.post('/ratings',userAuthentication,UserProductController.Ratings)
 
@@ -17,14 +17,13 @@ router.put('/editReview',userAuthentication,UserProductController.editReview)
 
 router.delete('/reviewDelete/:id',userAuthentication,UserProductController.deleteReview)
 
-//shop
-router.get('/shop',userAuthentication,UserProductController.shopGet)
+router.get('/shop',UserProductController.shopGet)
 
-router.get('/categoryFiltering',userAuthentication,UserProductController.CategoryFilter)
+router.get('/categoryFiltering',UserProductController.CategoryFilter)
 
-router.post('/ShopPageSort',userAuthentication, UserProductController.ShopSort);
+router.post('/ShopPageSort', UserProductController.ShopSort);
 
-router.post('/shopSearch', userAuthentication,UserProductController.ShopSearch);
+router.post('/shopSearch',UserProductController.ShopSearch);
 
 //whislist
 router.get('/wishlist',userAuthentication,UserProductController.whislistGet)

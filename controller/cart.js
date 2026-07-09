@@ -1,4 +1,3 @@
-const { render } = require("ejs");
 const { User } = require("../model/userModel");
 const bcrypt = require("bcrypt");
 const varifyOTP = require("../GenarateOTP");
@@ -12,26 +11,39 @@ const { Coupon } = require("../model/coupon");
 
 const cartGet = async (req, res) => {
   try {
-    const cartData = await cartModel.findOne({ userId: req.session.userId });
-    if (!cartData) {
-      res.render("User/cart", { cartData: "" });
+    const cartData = await cartModel.findOne({ userId: req.user ? req.user._id : null });
+    if (!cartData || !cartData.products?.length) {
+      return res.status(200).json({
+        success: true,
+        data: { cartData: null, count: 0 },
+      });
     }
 
-    res.render("User/cart", { cartData });
+    return res.status(200).json({
+      success: true,
+      data: {
+        cartData,
+        count: cartData.products.reduce((sum, p) => sum + (p.quantity || 0), 0),
+      },
+    });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
 const cartAdd = async (req, res) => {
   try {
     const productId = req.params.id;
+    if (!ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: "Invalid product id" });
+    }
     const product = await productPush.findOne({ _id: productId });
     if (product) {
       const { title, image, offerPrice } = product;
       let Price = product.Price;
      
-      const userId = req.session.userId;
+      const userId = req.user ? req.user._id : null;
       const existingCart = await cartModel.findOne({ userId: userId });
      
       if (product.offerPrice > 0) {
@@ -45,7 +57,8 @@ const cartAdd = async (req, res) => {
         );
         if (existingProductIndex !== -1) {
           existingCart.products[existingProductIndex].quantity++;
-          existingCart.products[existingProductIndex].total *=
+          existingCart.products[existingProductIndex].total =
+            existingCart.products[existingProductIndex].Price *
             existingCart.products[existingProductIndex].quantity;
         } else {
           existingCart.products.push({
@@ -76,13 +89,21 @@ const cartAdd = async (req, res) => {
         });
       }
 
-      res.status(200).redirect("/home");
+      const updatedCart = await cartModel.findOne({ userId });
+      return res.status(200).json({
+        success: true,
+        message: "Added to cart",
+        data: {
+          cartData: updatedCart,
+          count: updatedCart?.products?.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0,
+        },
+      });
     } else {
-      res.status(404).send("Product not found");
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
   } catch (error) {
     console.log(error);
-    res.status(500).send("Internal Server Error");
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 const calculateTotal = (products) => {
@@ -160,7 +181,7 @@ const qtyUp = async (req, res) => {
 
 const removeDelete = async (req, res) => {
   try {
-    const userId = new ObjectId(req.session.userId);
+    const userId = new ObjectId(req.user ? req.user._id : null);
     const productId = new ObjectId(req.params.id);
 
     const productRemovalResult = await cartModel.updateOne(
@@ -186,10 +207,10 @@ const removeDelete = async (req, res) => {
 const checkoutGet = async (req, res) => {
   try {
     if (req.session.order) {
-      const cartData = await cartModel.findOne({ userId: req.session.userId });
+      const cartData = await cartModel.findOne({ userId: req.user ? req.user._id : null });
 
       const userAddress = await addressModel.findOne({
-        userId: req.session.userId,
+        userId: req.user ? req.user._id : null,
       });
 
       if (!cartData) {
@@ -209,9 +230,9 @@ const checkoutGet = async (req, res) => {
 
       const coupons = await Coupon.find({});
 
-      res.render("User/checkout", { products, subtotal, userAddress, coupons });
+      res.status(200).json({ success: true, data: { products, subtotal, userAddress, coupons } });
     } else {
-      res.redirect("/product/cart");
+      res.status(200).json({ success: true, redirect: "/product/cart" });
     }
   } catch (error) {
     console.error(error);
@@ -222,7 +243,7 @@ const checkoutGet = async (req, res) => {
 const checkVerify = async (req, res) => {
   try {
     req.session.order = true;
-    res.redirect("/product/checkout");
+    res.status(200).json({ success: true, redirect: "/product/checkout" });
   } catch (error) {
     console.log(error);
   }

@@ -1,0 +1,126 @@
+.pd-page {
+  padding-top: 1.5rem;
+}
+
+.pd-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.pd-gallery {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(160deg, #ebe4da, #f7f1e8);
+  min-height: 520px;
+}
+
+.pd-gallery img {
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+
+.pd-gallery.zoomed img {
+  transform: scale(1.12);
+}
+
+.pd-gallery .badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+}
+
+.pd-info h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 0.75rem;
+}
+
+.pd-price {
+  font-size: 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.pd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+.pd-desc {
+  color: var(--ink-soft);
+  margin-bottom: 1.5rem;
+  max-width: 46ch;
+}
+
+.pd-delivery {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  margin-bottom: 1.5rem;
+}
+
+.pd-delivery p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.pd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.pd-actions .qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+}
+
+.pd-actions .qty button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.pd-related {
+  margin-top: 4rem;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.section-head h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+@media (max-width: 960px) {
+  .pd-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .related-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

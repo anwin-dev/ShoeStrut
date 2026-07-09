@@ -7,7 +7,7 @@ const { Order } = require("../model/orderModel");
 const applyCoupon = async (req, res) => {
   try {
     console.log("working aply coupon");
-    const userId = req.session.userId;
+    const userId = req.user ? req.user._id : req.session.userId;
     const code = req.body.code;
     req.session.code = code;
     console.log(code);
@@ -19,12 +19,12 @@ const applyCoupon = async (req, res) => {
     const coupon = await Coupon.findOne({ code: code });
     console.log(coupon);
 
-    const discount = coupon.discount;
-    console.log(discount);
-
     if (!coupon) {
       return res.status(200).json({ status: "Not" });
     }
+
+    const discount = coupon.discount;
+    console.log(discount);
 
     if (total > coupon.minimum && total < coupon.maximum) {
       const discountValue = (total * discount) / 100;

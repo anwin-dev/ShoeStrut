@@ -1,0 +1,95 @@
+.profile-page {
+  padding-top: 1.5rem;
+}
+
+.profile-page h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 1.5rem;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.profile-tabs {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.profile-tabs button {
+  text-align: left;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.profile-tabs button.active,
+.profile-tabs button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.overview,
+.address-card,
+.order-card,
+.wallet-hero,
+.txn-row,
+.address-form {
+  padding: 1.15rem;
+}
+
+.overview p {
+  margin-top: 0.55rem;
+}
+
+.order-list,
+.txn-list,
+.address-existing {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.order-card,
+.txn-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.order-card p,
+.muted {
+  color: var(--muted);
+}
+
+.address-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.wallet-hero h2 {
+  font-size: 2.2rem;
+}
+
+@media (max-width: 900px) {
+  .profile-layout,
+  .address-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .profile-tabs button {
+    text-align: center;
+    font-size: 0.82rem;
+    padding: 0.65rem 0.4rem;
+  }
+}

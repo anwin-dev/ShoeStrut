@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: stepstyle-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: RAZORPAY_ID
+        sync: false
+      - key: RAZORPAY_SECRET
+        sync: false
+      - key: EMAIL
+        sync: false
+      - key: PASSWORD
+        sync: false

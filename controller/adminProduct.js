@@ -1,4 +1,3 @@
-const { render } = require("ejs");
 const { adminModel } = require("../model/adminModel");
 const { User } = require("../model/userModel");
 const { productPush } = require("../model/productModel");
@@ -8,7 +7,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 const XLSX = require("xlsx");
 
-const session = require("express-session");
+// const session removed
 const { Wallet } = require("../model/wallet");
 
 const productGet = async (req, res) => {
@@ -28,9 +27,10 @@ const productGet = async (req, res) => {
       .skip(startIndex)
       .limit(limit);
 
-    res
-      .status(200)
-      .render("admin/productList", { product, totalPages, currentPage: page });
+    res.status(200).json({
+      success: true,
+      data: { product, totalPages, currentPage: page },
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -41,7 +41,7 @@ const addProductGet = async (req, res) => {
   try {
     const category = await categoryModel.find({});
     console.log(category);
-    res.render("admin/addProduct", { category });
+    res.status(200).json({ success: true, data: { category } });
   } catch (error) {
     console.log(error);
   }
@@ -96,9 +96,9 @@ const productPushPost = async (req, res) => {
         discountPercentage: discountPercentage,
       });
 
-      res.redirect("/admin/product/add");
+      res.status(200).json({ success: true, redirect: "/admin/product/add" });
     } else {
-      res.redirect("/admin/product/add");
+      res.status(200).json({ success: true, redirect: "/admin/product/add" });
     }
   } catch (error) {
     console.log(error);
@@ -143,10 +143,10 @@ const productListEditGet = async (req, res) => {
     const productId = req.params.id;
     const product = await productPush.findOne({ _id: productId });
     if (!product) {
-      return res.status(404).render("404page");
+      return res.status(404).json({ success: true, view: "404page" });
     }
 
-    res.render("admin/productEdit", { product });
+    res.status(200).json({ success: true, data: { product } });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -175,7 +175,7 @@ const productEditPost = async (req, res) => {
       brand,
       stock,
       Price,
-      category,
+      categoryId: category,
       offerPrice,
       discountPercentage,
     };
@@ -194,10 +194,10 @@ const productEditPost = async (req, res) => {
     console.log("update Product data", updatedProductData);
 
     if (!updatedProduct) {
-      return res.status(404).render("404page");
+      return res.status(404).json({ success: true, view: "404page" });
     }
 
-    res.redirect("/admin/product/list");
+    res.status(200).json({ success: true, redirect: "/admin/product/list" });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -233,7 +233,7 @@ const userListGet = async (req, res) => {
   try {
     const user = await User.find({});
 
-    res.render("admin/userList", { user });
+    res.status(200).json({ success: true, data: { user } });
   } catch (error) {
     console.log(error);
   }
@@ -274,14 +274,16 @@ const orderList = async (req, res) => {
       .limit(limit);
 
     if (orderData.length > 0) {
-      return res.status(200).render("admin/orderList", {
-        orderData,
-        totalPages,
-        currentPage: page,
+      return res.status(200).json({
+        success: true,
+        data: { orderData, totalPages, currentPage: page },
       });
-    } else {
-      return res.status(404).redirect("404");
     }
+
+    return res.status(200).json({
+      success: true,
+      data: { orderData: [], totalPages: 0, currentPage: page },
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server error");
@@ -356,7 +358,7 @@ const orderDelete = async (req, res) => {
       return res.status(404).send("Order not found");
     }
 
-    return res.status(200).render("admin/orderList", { orderData });
+    return res.status(200).json({ success: true, view: "admin/orderList", data: { orderData } });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -374,7 +376,7 @@ const OrderDetails = async (req, res) => {
     const userData = await User.findOne({ _id: orderData.userId });
     res
       .status(200)
-      .render("admin/orderDetails", { order: orderData, userData });
+      .json({ success: true, view: "admin/orderDetails", data: { order: orderData, userData } });
   } catch (error) {
     console.log(error);
   }
@@ -476,14 +478,14 @@ const salesReport = async (req, res) => {
 
     const totalDiscount = parseInt(totalDiscountValue);
 
-    res.status(200).render("admin/salesReport", {
+    res.status(200).json({ success: true, view: "admin/salesReport", data: {
       latestOrders,
       deliveredOrderCount,
       deliveredRevenue,
       totalDiscount,
       totalPages,
       currentPage: page,
-    });
+    } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });

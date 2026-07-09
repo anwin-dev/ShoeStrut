@@ -8,10 +8,11 @@ const { adminAuthentication } = require("../middleware/adminAuth");
 
 router.get("/list", adminAuthentication, AdminProductController.productGet);
 
-router.get("/add", AdminProductController.addProductGet);
+router.get("/add", adminAuthentication, AdminProductController.addProductGet);
 
 router.post(
   "/push",
+  adminAuthentication,
   upload.single("image"),
   AdminProductController.productPushPost
 );
@@ -21,9 +22,9 @@ router.get("/productList", adminAuthentication,AdminProductController.productLis
 router.get("/productListEdit/:id",adminAuthentication, AdminProductController.productListEditGet);
 
 
-router.post('/productEdit/:id', upload.single('image'),AdminProductController.productEditPost);
+router.post('/productEdit/:id', adminAuthentication, upload.single('image'),AdminProductController.productEditPost);
 
-router.delete('/editDeleteImage:id',adminAuthentication,AdminProductController.editDeleteImg)
+router.delete('/editDeleteImage/:id',adminAuthentication,AdminProductController.editDeleteImg)
 
 router.get("/user/list",adminAuthentication, AdminProductController.userListGet);
 

@@ -1,0 +1,61 @@
+.dashboard-panels {
+  margin-top: 1.25rem;
+}
+
+.panel {
+  padding: 1.15rem;
+}
+
+.panel h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-wrap {
+  margin-top: 0.5rem;
+}
+
+.mini-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.mini-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mini-list li:last-child {
+  border-bottom: none;
+}
+
+.mini-list img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #252a3a;
+}
+
+.mini-list strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.mini-list span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

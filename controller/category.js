@@ -1,10 +1,9 @@
-const { render } = require("ejs");
 const { adminModel } = require("../model/adminModel");
 const { User } = require("../model/userModel");
 const { productPush } = require("../model/productModel");
 const { categoryModel } = require("../model/categoryModel");
 const mongoose = require("mongoose");
-const session = require("express-session");
+// const session removed
 const { findOne } = require("../model/whislist");
 
 const categoryGet = async (req, res) => {
@@ -19,7 +18,7 @@ const categoryGet = async (req, res) => {
 
     console.log("dsfd");
     const category = await categoryModel.find({});
-    res.render("admin/category", { category, message });
+    res.status(200).json({ success: true, data: { category, message } });
   } catch (error) {
   
     console.log(error);
@@ -67,10 +66,10 @@ const editCategoryGet = async (req, res) => {
     const categoryId = req.params.id;
     const category = await categoryModel.findOne({ _id: categoryId });
     if (!category) {
-      return res.status(404).render("404page");
+      return res.status(404).json({ success: true, view: "404page" });
     }
 
-    res.render("admin/adminCategoryEdit", { category });
+    res.status(200).json({ success: true, data: { category } });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -93,11 +92,11 @@ const categoryEditPost = async (req, res) => {
       );
 
       if (!updatedCategory) {
-        return res.status(404).render("404page");
+        return res.status(404).json({ success: true, view: "404page" });
       }
     }
 
-    return res.redirect("/admin/category");
+    return res.status(200).json({ success: true, redirect: "/admin/category" });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -116,10 +115,10 @@ const categoryPost = async (req, res) => {
       categoryModel.insertMany({ name, description });
     } else {
       req.session.duplicateCategory = true;
-      res.redirect("/admin/category");
+      res.status(200).json({ success: true, redirect: "/admin/category" });
     }
 
-    res.redirect("/admin/category");
+    res.status(200).json({ success: true, redirect: "/admin/category" });
   } catch (error) {
     console.log(error);
   }
@@ -129,7 +128,7 @@ const OfferListGet = async (req, res) => {
   try {
     const offerList = await categoryModel.find({});
 
-    res.status(200).render("admin/categoryOffer", { offerList });
+    res.status(200).json({ success: true, view: "admin/categoryOffer", data: { offerList } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -143,7 +142,7 @@ const createOffer = async (req, res) => {
     console.log(categoryId);
     const categoryName = await categoryModel.findOne({ _id: categoryId });
   
-    res.status(200).render("admin/categoryEditOffer", { categoryName });
+    res.status(200).json({ success: true, view: "admin/categoryEditOffer", data: { categoryName } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -1,0 +1,17 @@
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 1.5rem;
+  overflow: auto;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 1rem;
+  }
+}

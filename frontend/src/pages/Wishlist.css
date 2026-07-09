@@ -1,0 +1,47 @@
+.wish-page {
+  padding-top: 1.5rem;
+}
+
+.wish-page h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 1.5rem;
+}
+
+.wish-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.wish-card {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: center;
+}
+
+.wish-card img {
+  width: 120px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #ebe4da;
+}
+
+.wish-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+}
+
+.wish-actions {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .wish-card {
+    grid-template-columns: 90px 1fr;
+  }
+}

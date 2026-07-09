@@ -1,4 +1,3 @@
-const { render } = require("ejs");
 const { User } = require("../model/userModel");
 const bcrypt = require("bcrypt");
 const varifyOTP = require("../GenarateOTP");
@@ -8,7 +7,7 @@ const { categoryModel } = require("../model/categoryModel");
 const { cartModel } = require("../model/cartModel");
 const mongoose = require("mongoose");
 const { ObjectId } = require("mongodb");
-const { reviewModel } = require("../model/ReviewModel");
+const { reviewModel } = require("../model/reviewModel");
 const { signupGet } = require("./user");
 const { Order } = require("../model/orderModel");
 const WhislitModel = require("../model/whislist");
@@ -17,14 +16,14 @@ const productDetailsGet = async (req, res) => {
   try {
     const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).render("404page");
+      return res.status(400).json({ success: false, message: "Not found" });
     }
 
     //star
 
     let userRating = await reviewModel.findOne({
       productId: id,
-      userId: req.session.userId,
+      userId: req.user ? req.user._id : null,
     });
     let userRated = userRating?.rating ? userRating.rating : 0;
     
@@ -36,7 +35,7 @@ const productDetailsGet = async (req, res) => {
       .limit(4);
 
     if (!product) {
-      return res.render("404page");
+      return res.status(404).json({ success: false, message: "Not found" });
     }
 
     const reviewData = await reviewModel
@@ -46,18 +45,18 @@ const productDetailsGet = async (req, res) => {
     //finding user have ordered product
 
     const orderedProduct = await Order.findOne({
-      userId: req.session.userId,
+      userId: req.user ? req.user._id : null,
       "items.productId": id,
     });
     
 
-    const cartData = await cartModel.find({ userId: req.session.userId });
-    const userId = req.session.userId;
+    const cartData = await cartModel.find({ userId: req.user ? req.user._id : null });
+    const userId = req.user ? req.user._id : null;
 
     const reviewCount = reviewModel.length - 1;
     console.log("review count " + reviewCount);
 
-    res.render("User/productDetails", {
+    res.status(200).json({ success: true,
       product,
       cartData,
       relatedProducts,
@@ -79,7 +78,7 @@ const productDetailsGet = async (req, res) => {
 const Ratings = async (req, res) => {
   try {
     console.log("working");
-    let userId = req.session.userId;
+    let userId = req.user ? req.user._id : null;
     let { comment, productId } = req.body;
     userId = new ObjectId(userId);
     productId = new ObjectId(productId);
@@ -110,7 +109,7 @@ const Ratings = async (req, res) => {
 
 const Star = async (req, res) => {
   try {
-    let userId = req.session.userId;
+    let userId = req.user ? req.user._id : null;
     let { rate, productId } = req.body;
     userId = new ObjectId(userId);
     productId = new ObjectId(productId);
@@ -168,7 +167,7 @@ const Star = async (req, res) => {
 
 const editReview = async (req, res) => {
   try {
-    const userId = req.session.userId; // Assuming you have a session with userId
+    const userId = req.user ? req.user._id : null; // Assuming you have a session with userId
     console.log(req.body);
     const data = req.body.data.review;
     const reviewId = req.body.reviewId;
@@ -244,7 +243,7 @@ const shopGet = async (req, res) => {
 
     const categories = await categoryModel.find({});
 
-    res.render("User/shop", {
+    res.status(200).json({ success: true,
       product,
       categories,
       newArrivals,
@@ -395,13 +394,13 @@ const ShopSearch = async (req, res) => {
 //whislist
 const whislistGet = async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const userId = req.user ? req.user._id : null;
 
     const wishlist = await WhislitModel.findOne({ userId });
 
     if (!wishlist) {
       console.log("no wishlist");
-      return res.status(200).render("User/whislist", {
+      return res.status(200).json({ success: true,
         products: [],
         message: "User have no wishlist product",
       });
@@ -414,7 +413,7 @@ const whislistGet = async (req, res) => {
     console.log("products");
     console.log(products);
 
-    res.status(200).render("User/whislist", { products });
+    res.status(200).json({ success: true, products });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -424,7 +423,7 @@ const whislistGet = async (req, res) => {
 const addWhislist = async (req, res) => {
   try {
     console.log("its working");
-    const userId = req.session.userId;
+    const userId = req.user ? req.user._id : null;
     const productId = req.params.id;
 
     console.log(userId);
@@ -463,7 +462,7 @@ const addToCartWislist = async (req, res) => {
     const product = await productPush.findOne({ _id: productId });
     if (product) {
       const { title, Price, image } = product;
-      const userId = req.session.userId;
+      const userId = req.user ? req.user._id : null;
       const existingCart = await cartModel.findOne({ userId: userId });
       if (existingCart) {
         const existingProductIndex = existingCart.products.findIndex(
@@ -471,7 +470,8 @@ const addToCartWislist = async (req, res) => {
         );
         if (existingProductIndex !== -1) {
           existingCart.products[existingProductIndex].quantity++;
-          existingCart.products[existingProductIndex].total *=
+          existingCart.products[existingProductIndex].total =
+            existingCart.products[existingProductIndex].Price *
             existingCart.products[existingProductIndex].quantity;
         } else {
           existingCart.products.push({
@@ -502,7 +502,7 @@ const addToCartWislist = async (req, res) => {
         });
       }
 
-      res.status(200).redirect("/home");
+      res.status(200).json({ success: true, message: "Added to cart wishlist" });
     } else {
       res.status(404).send("Product not found");
     }
@@ -525,7 +525,7 @@ const removeWishlist = async (req, res) => {
   console.log("fffff");
   try {
     console.log("working");
-    const userId = req.session.userId;
+    const userId = req.user ? req.user._id : null;
     const productId = req.params.id;
 
     const productRemovalResult = await WhislitModel.updateOne(

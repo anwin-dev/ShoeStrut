@@ -8,7 +8,7 @@ const CouponGet = async (req, res) => {
       message = "Coupon Code is unique Cannot add multiple time";
       req.session.coupon = null;
     }
-    res.status(200).render("admin/coupon", { message });
+    res.status(200).json({ success: true, view: "admin/coupon", data: { message } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server error" });
@@ -18,7 +18,7 @@ const CouponGet = async (req, res) => {
 const couponList = async (req, res) => {
   try {
     const CouponData = await Coupon.find({});
-    res.status(200).render("admin/couponList", { CouponData });
+    res.status(200).json({ success: true, view: "admin/couponList", data: { CouponData } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -49,10 +49,10 @@ const addCoupon = async (req, res) => {
 
       const savedCoupon = await newCoupon.save();
       console.log(savedCoupon);
-      res.status(200).redirect("/admin/product/coupon");
+      res.status(200).json({ success: true, redirect: "/admin/product/coupon" });
     } else {
       req.session.coupon = true;
-      res.status(200).redirect("/admin/product/coupon");
+      res.status(200).json({ success: true, redirect: "/admin/product/coupon" });
     }
   } catch (error) {
     console.log(error);
