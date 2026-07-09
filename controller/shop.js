@@ -15,6 +15,7 @@ const WhislitModel = require("../model/whislist");
 const productDetailsGet = async (req, res) => {
   try {
     const id = req.params.id;
+    console.log(`[productDetailsGet] id=${id}`);
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: "Not found" });
     }
@@ -29,6 +30,7 @@ const productDetailsGet = async (req, res) => {
     
 
     const product = await productPush.findOne({ _id: id });
+    console.log(`[productDetailsGet] found=${Boolean(product)}`);
     const relatedProducts = await productPush
       .find({})
       .sort({ _id: -1 })
@@ -219,9 +221,13 @@ const shopGet = async (req, res) => {
 
     const totalDocuments = await productPush.countDocuments({});
     const totalPages = Math.ceil(totalDocuments / limit);
+    const query = {};
+    console.log(
+      `[shopGet] db=${mongoose.connection.name} page=${page} limit=${limit} skip=${startIndex} totalDocuments=${totalDocuments}`
+    );
 
-    const product = await productPush.find({}).skip(startIndex).limit(limit);
-    console.log(product);
+    const product = await productPush.find(query).skip(startIndex).limit(limit);
+    console.log(`[shopGet] productsReturned=${product.length}`);
 
     const ratings = await productPush.aggregate([
       {
@@ -239,9 +245,12 @@ const shopGet = async (req, res) => {
       },
     ]);
 
-    const newArrivals = await productPush.find({}).sort({ _id: -1 }).limit(5);
+    const newArrivals = await productPush.find(query).sort({ _id: -1 }).limit(5);
 
     const categories = await categoryModel.find({});
+    console.log(
+      `[shopGet] categoriesReturned=${categories.length} newArrivalsReturned=${newArrivals.length}`
+    );
 
     res.status(200).json({ success: true,
       product,

@@ -27,6 +27,7 @@ const ProductDetail = () => {
       .get(`/product/details/${id}`)
       .then(({ data }) => {
         if (!alive) return;
+        console.log('[ProductDetail] product found=', Boolean(data.product), 'related count=', data.relatedProducts?.length || 0);
         setProduct(data.product);
         setRelated(data.relatedProducts || []);
         trackRecentlyViewed(data.product);

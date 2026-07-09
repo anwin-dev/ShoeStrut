@@ -19,6 +19,7 @@ const Home = () => {
       .get('/product/shop', { params: { page: 1, limit: 8 } })
       .then(({ data }) => {
         if (!alive) return;
+        console.log('[Home] shop response product count=', data.product?.length || 0, 'newArrivals=', data.newArrivals?.length || 0);
         setProducts(data.newArrivals?.length ? data.newArrivals : data.product || []);
         setCategories(data.categories || []);
       })
@@ -35,6 +36,10 @@ const Home = () => {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    console.log('[Home] rendered product count=', products.length);
+  }, [products]);
 
   return (
     <div className="home">

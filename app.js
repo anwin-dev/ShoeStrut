@@ -23,10 +23,14 @@ const allowedOrigins = (
 
 const mongoUrl =
   process.env.MONGO_URL || "mongodb://127.0.0.1:27017/ShoeStrut";
+const mongoDbName = process.env.MONGO_DB_NAME || "ShoeStrut";
 
 mongoose
-  .connect(mongoUrl)
-  .then(() => console.log("MongoDB connected"))
+  .connect(mongoUrl, { dbName: mongoDbName })
+  .then(() => {
+    const { host, name } = mongoose.connection;
+    console.log(`[mongo] connected host=${host} db=${name}`);
+  })
   .catch((err) => console.error("MongoDB connection error:", err.message));
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -65,6 +69,30 @@ app.use(
 
 app.get("/health", (req, res) => {
   res.status(200).json({ success: true, message: "StepStyle API is running" });
+});
+
+app.get("/health/db", async (req, res) => {
+  try {
+    const { productPush } = require("./model/productModel");
+    const { categoryModel } = require("./model/categoryModel");
+    const { User } = require("./model/userModel");
+
+    const [products, categories, users] = await Promise.all([
+      productPush.countDocuments({}),
+      categoryModel.countDocuments({}),
+      User.countDocuments({}),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      db: mongoose.connection.name,
+      host: mongoose.connection.host,
+      counts: { products, categories, users },
+    });
+  } catch (error) {
+    console.error("[health/db] error:", error);
+    res.status(500).json({ success: false, message: "DB health check failed" });
+  }
 });
 
 app.use(express.static(path.join(__dirname, "Public")));

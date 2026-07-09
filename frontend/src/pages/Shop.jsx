@@ -35,6 +35,7 @@ const Shop = () => {
         if (q) {
           const { data } = await api.post('/product/shopSearch', { search: q });
           if (!alive) return;
+          console.log('[Shop] shopSearch response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
           setPage(1);
@@ -43,16 +44,19 @@ const Shop = () => {
             params: { category },
           });
           if (!alive) return;
+          console.log('[Shop] categoryFiltering response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
         } else if (sort && sort !== 'Featured') {
           const { data } = await api.post('/product/ShopPageSort', { sortOption: sort });
           if (!alive) return;
+          console.log('[Shop] ShopPageSort response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
         } else {
           const { data } = await api.get('/product/shop', { params: { page, limit: 8 } });
           if (!alive) return;
+          console.log('[Shop] shop response product count=', data.product?.length || 0, 'categories=', data.categories?.length || 0);
           setProducts(data.product || []);
           setCategories(data.categories || []);
           setTotalPages(data.totalPages || 1);
@@ -77,6 +81,10 @@ const Shop = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, category, q, sort]);
+
+  useEffect(() => {
+    console.log('[Shop] rendered product count=', products.length);
+  }, [products]);
 
   const activeCategoryName = useMemo(() => {
     return categories.find((c) => c._id === category)?.name;
