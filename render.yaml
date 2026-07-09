@@ -12,7 +12,7 @@ services:
       - key: MONGO_URL
         sync: false
       - key: MONGO_DB_NAME
-        value: ShoeStrut
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS

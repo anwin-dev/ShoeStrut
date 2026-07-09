@@ -215,18 +215,46 @@ const deleteReview = async (req, res) => {
 const shopGet = async (req, res) => {
   const PAGE_SIZE = 6;
   try {
+    console.log(`[shopGet] incomingUrl=${req.originalUrl}`);
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || PAGE_SIZE;
     const startIndex = (page - 1) * limit;
+    const sort = req.query.sort || "featured";
+    const search = (req.query.search || "").trim();
+    const category = req.query.category || null;
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
+        { type: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (category && mongoose.Types.ObjectId.isValid(category)) {
+      query.categoryId = category;
+    }
+
+    let sortQuery = { _id: -1 };
+    if (sort === "priceAsc") sortQuery = { Price: 1 };
+    if (sort === "priceDesc") sortQuery = { Price: -1 };
+    if (sort === "az") sortQuery = { title: 1 };
+    if (sort === "za") sortQuery = { title: -1 };
 
     const totalDocuments = await productPush.countDocuments({});
-    const totalPages = Math.ceil(totalDocuments / limit);
-    const query = {};
+    const filteredDocuments = await productPush.countDocuments(query);
+    const totalPages = Math.ceil(filteredDocuments / limit);
     console.log(
-      `[shopGet] db=${mongoose.connection.name} page=${page} limit=${limit} skip=${startIndex} totalDocuments=${totalDocuments}`
+      `[shopGet] db=${mongoose.connection.name} page=${page} limit=${limit} skip=${startIndex} totalDocuments=${totalDocuments} filteredDocuments=${filteredDocuments} query=${JSON.stringify(
+        query
+      )} sort=${JSON.stringify(sortQuery)}`
     );
 
-    const product = await productPush.find(query).skip(startIndex).limit(limit);
+    const product = await productPush
+      .find(query)
+      .sort(sortQuery)
+      .skip(startIndex)
+      .limit(limit);
     console.log(`[shopGet] productsReturned=${product.length}`);
 
     const ratings = await productPush.aggregate([

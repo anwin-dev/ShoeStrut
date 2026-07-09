@@ -75,19 +75,26 @@ app.get("/health/db", async (req, res) => {
   try {
     const { productPush } = require("./model/productModel");
     const { categoryModel } = require("./model/categoryModel");
+    const { reviewModel } = require("./model/reviewModel");
     const { User } = require("./model/userModel");
 
-    const [products, categories, users] = await Promise.all([
+    const [products, categories, reviews, users] = await Promise.all([
       productPush.countDocuments({}),
       categoryModel.countDocuments({}),
+      reviewModel.countDocuments({}),
       User.countDocuments({}),
     ]);
+
+    const collectionEntries = mongoose.connection.db
+      ? await mongoose.connection.db.listCollections().toArray()
+      : [];
 
     res.status(200).json({
       success: true,
       db: mongoose.connection.name,
       host: mongoose.connection.host,
-      counts: { products, categories, users },
+      counts: { products, categories, reviews, users },
+      collections: collectionEntries.map((item) => item.name),
     });
   } catch (error) {
     console.error("[health/db] error:", error);
