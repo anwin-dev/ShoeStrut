@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,10 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  const from = location.state?.from || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +24,7 @@ const Login = () => {
     try {
       await login(email, password);
       toast.success('Welcome back');
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
     } finally {
@@ -40,7 +43,7 @@ const Login = () => {
           <p>Enter your details to access your account</p>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && <div className="auth-error" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -53,6 +56,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Enter your email"
+              autoComplete="email"
             />
           </div>
           <div className="form-group">
@@ -65,6 +69,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Enter your password"
+              autoComplete="current-password"
             />
           </div>
           <button type="submit" className="btn btn-primary w-full mt-4" disabled={loading}>
@@ -74,7 +79,7 @@ const Login = () => {
 
         <div className="auth-footer">
           <p>
-            Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
+            Don&apos;t have an account? <Link to="/signup" className="auth-link">Sign up</Link>
           </p>
         </div>
       </div>

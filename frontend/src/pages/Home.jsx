@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArrowRight, Truck, ShieldCheck, RefreshCcw } from 'lucide-react';
 import api from '../api/axios';
+import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import { getRecentlyViewed } from '../utils/format';
 import './Home.css';
@@ -19,7 +21,6 @@ const Home = () => {
       .get('/product/shop', { params: { page: 1, limit: 8 } })
       .then(({ data }) => {
         if (!alive) return;
-        console.log('[Home] shop response product count=', data.product?.length || 0, 'newArrivals=', data.newArrivals?.length || 0);
         setProducts(data.newArrivals?.length ? data.newArrivals : data.product || []);
         setCategories(data.categories || []);
       })
@@ -37,60 +38,30 @@ const Home = () => {
     };
   }, []);
 
-  useEffect(() => {
-    console.log('[Home] rendered product count=', products.length);
-  }, [products]);
-
   return (
     <div className="home">
-      <section className="hero">
-        <div className="hero-copy container fade-up">
-          <p className="hero-kicker">StepStyle Collection 2026</p>
-          <h1>StepStyle</h1>
-          <p className="hero-sub">
-            Footwear with presence — quiet confidence, daily comfort, and details that feel
-            intentional.
-          </p>
-          <div className="hero-cta">
-            <Link to="/shop" className="btn btn-primary">
-              Shop the edit <ArrowRight size={18} />
-            </Link>
-            <Link to="/signup" className="btn btn-outline">
-              Join StepStyle
-            </Link>
-          </div>
-        </div>
-        <div className="hero-visual" aria-hidden="true">
-          <div className="hero-orb" />
-          <img
-            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1600&q=80"
-            alt=""
-          />
-        </div>
-      </section>
+      <Hero />
 
       <section className="trust container">
-        <div>
-          <Truck size={20} />
-          <div>
-            <h3>Fast delivery</h3>
-            <p>Estimated 3–5 day dispatch</p>
-          </div>
-        </div>
-        <div>
-          <ShieldCheck size={20} />
-          <div>
-            <h3>Secure payments</h3>
-            <p>Razorpay + COD options</p>
-          </div>
-        </div>
-        <div>
-          <RefreshCcw size={20} />
-          <div>
-            <h3>Easy returns</h3>
-            <p>7-day exchange window</p>
-          </div>
-        </div>
+        {[
+          { icon: Truck, title: 'Fast delivery', desc: 'Estimated 3–5 day dispatch' },
+          { icon: ShieldCheck, title: 'Secure payments', desc: 'Razorpay + COD options' },
+          { icon: RefreshCcw, title: 'Easy returns', desc: '7-day exchange window' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.title}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1, duration: 0.5 }}
+          >
+            <item.icon size={22} />
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.desc}</p>
+            </div>
+          </motion.div>
+        ))}
       </section>
 
       <section className="container home-section">
@@ -111,8 +82,8 @@ const Home = () => {
           </div>
         ) : (
           <div className="product-grid">
-            {products.slice(0, 4).map((p) => (
-              <ProductCard key={p._id} product={p} />
+            {products.slice(0, 4).map((p, i) => (
+              <ProductCard key={p._id} product={p} index={i} />
             ))}
           </div>
         )}
@@ -127,11 +98,19 @@ const Home = () => {
             </div>
           </div>
           <div className="cat-grid">
-            {categories.map((cat) => (
-              <Link key={cat._id} to={`/shop?category=${cat._id}`} className="cat-tile">
-                <span>{cat.name}</span>
-                <ArrowRight size={16} />
-              </Link>
+            {categories.map((cat, i) => (
+              <motion.div
+                key={cat._id}
+                initial={{ opacity: 0, scale: 0.96 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <Link to={`/shop?category=${cat._id}`} className="cat-tile">
+                  <span>{cat.name}</span>
+                  <ArrowRight size={16} />
+                </Link>
+              </motion.div>
             ))}
           </div>
         </section>
@@ -146,8 +125,8 @@ const Home = () => {
             </div>
           </div>
           <div className="product-grid">
-            {recent.slice(0, 4).map((p) => (
-              <ProductCard key={p._id} product={p} />
+            {recent.slice(0, 4).map((p, i) => (
+              <ProductCard key={p._id} product={p} index={i} />
             ))}
           </div>
         </section>

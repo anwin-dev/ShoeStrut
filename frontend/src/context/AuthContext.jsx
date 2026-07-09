@@ -1,14 +1,59 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [initializing, setInitializing] = useState(true);
+
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  const restoreSession = useCallback(async () => {
+    const savedToken = localStorage.getItem('token');
+    if (!savedToken) {
+      setInitializing(false);
+      return;
+    }
+
+    try {
+      const { data } = await api.get('/user/profile');
+      const userData = data?.data?.userData;
+      if (userData) {
+        const safeUser = {
+          _id: userData._id,
+          email: userData.email,
+          username: userData.username,
+        };
+        localStorage.setItem('user', JSON.stringify(safeUser));
+        setUser(safeUser);
+        setToken(savedToken);
+      } else {
+        clearAuth();
+      }
+    } catch {
+      clearAuth();
+    } finally {
+      setInitializing(false);
+    }
+  }, [clearAuth]);
+
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
 
   const login = async (email, password) => {
     const { data } = await api.post('/user/login', { email, password });
@@ -43,15 +88,22 @@ export const AuthProvider = ({ children }) => {
     } catch {
       // ignore network errors on logout
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
+    clearAuth();
   };
 
   const value = useMemo(
-    () => ({ user, token, isAuthenticated: Boolean(token), login, signup, verifyOtp, logout }),
-    [user, token]
+    () => ({
+      user,
+      token,
+      isAuthenticated: Boolean(token && user),
+      initializing,
+      login,
+      signup,
+      verifyOtp,
+      logout,
+      refreshSession: restoreSession,
+    }),
+    [user, token, initializing, restoreSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

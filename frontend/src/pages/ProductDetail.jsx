@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Heart, Minus, Plus, ShoppingBag, Truck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Heart, Minus, Plus, ShoppingBag, Star, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api, { assetUrl } from '../api/axios';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { formatPrice, getDisplayPrice, trackRecentlyViewed } from '../utils/format';
 import './ProductDetail.css';
 
@@ -14,6 +16,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,10 +30,9 @@ const ProductDetail = () => {
       .get(`/product/details/${id}`)
       .then(({ data }) => {
         if (!alive) return;
-        console.log('[ProductDetail] product found=', Boolean(data.product), 'related count=', data.relatedProducts?.length || 0);
         setProduct(data.product);
         setRelated(data.relatedProducts || []);
-        trackRecentlyViewed(data.product);
+        if (data.product) trackRecentlyViewed(data.product);
       })
       .catch(() => {
         if (alive) setProduct(null);
@@ -56,11 +58,11 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="container">
+      <div className="container pd-page">
         <div className="empty-state">
           <h3>Product not found</h3>
           <p>This style may have been removed.</p>
-          <Link to="/shop" className="btn btn-primary">
+          <Link to="/shop" className="btn btn-accent">
             Back to shop
           </Link>
         </div>
@@ -70,15 +72,16 @@ const ProductDetail = () => {
 
   const { price, original, discount } = getDisplayPrice(product);
   const outOfStock = Number(product.stock) <= 0;
+  const wished = isWishlisted(product._id);
+  const rating = product.rating || 4;
 
   const onAdd = async () => {
     const result = await addToCart(product._id);
     if (result.needsAuth) {
-      navigate('/login');
+      navigate('/login', { state: { from: `/product/${product._id}` } });
       return;
     }
     if (!result.ok) return;
-    // Extra units via quantity endpoint after first insert
     if (qty > 1) {
       try {
         const { data } = await api.get('/product/cart');
@@ -100,22 +103,20 @@ const ProductDetail = () => {
 
   const onWish = async () => {
     if (!isAuthenticated) {
-      toast.error('Please log in to save items');
-      navigate('/login');
+      navigate('/login', { state: { from: `/product/${product._id}` } });
       return;
     }
-    try {
-      const { data } = await api.get(`/product/addWhislis/${product._id}`);
-      if (data.status === 'included') toast('Already in wishlist');
-      else toast.success('Saved to wishlist');
-    } catch {
-      toast.error('Could not update wishlist');
-    }
+    await toggleWishlist(product._id);
   };
 
   return (
     <div className="container pd-page">
-      <div className="pd-grid fade-up">
+      <motion.div
+        className="pd-grid"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div
           className={`pd-gallery ${zoom ? 'zoomed' : ''}`}
           onMouseEnter={() => setZoom(true)}
@@ -132,9 +133,13 @@ const ProductDetail = () => {
           />
         </div>
 
-        <div className="pd-info">
+        <div className="pd-info pd-sticky">
           <p className="eyebrow">{product.brand || 'StepStyle'}</p>
           <h1>{product.title}</h1>
+          <div className="pd-rating">
+            <Star size={16} fill="var(--gold)" color="var(--gold)" />
+            <span>{Number(rating).toFixed(1)}</span>
+          </div>
           <div className="pd-price">
             {original && <span className="price-old">{formatPrice(original)}</span>}
             <span className="price">{formatPrice(price)}</span>
@@ -144,8 +149,8 @@ const ProductDetail = () => {
             <span className={`badge ${outOfStock ? 'badge-out' : 'badge-stock'}`}>
               {outOfStock ? 'Out of stock' : `${product.stock} in stock`}
             </span>
-            {product.color && <span>Color: {product.color}</span>}
-            {product.size && <span>Size: {product.size}</span>}
+            {product.color && <span className="pd-meta-item">Color: {product.color}</span>}
+            {product.size && <span className="pd-meta-item">Size: {product.size}</span>}
           </div>
 
           <p className="pd-desc">{product.description || 'Premium footwear crafted for everyday movement.'}</p>
@@ -160,23 +165,35 @@ const ProductDetail = () => {
 
           <div className="pd-actions">
             <div className="qty">
-              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease">
+              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">
                 <Minus size={16} />
               </button>
               <span>{qty}</span>
-              <button type="button" onClick={() => setQty((q) => Math.min(5, q + 1))} aria-label="Increase">
+              <button type="button" onClick={() => setQty((q) => Math.min(5, q + 1))} aria-label="Increase quantity">
                 <Plus size={16} />
               </button>
             </div>
-            <button type="button" className="btn btn-primary" onClick={onAdd} disabled={outOfStock}>
+            <motion.button
+              type="button"
+              className="btn btn-accent"
+              onClick={onAdd}
+              disabled={outOfStock}
+              whileTap={{ scale: 0.97 }}
+            >
               <ShoppingBag size={16} /> Add to bag
-            </button>
-            <button type="button" className="btn btn-outline" onClick={onWish}>
-              <Heart size={16} /> Wishlist
-            </button>
+            </motion.button>
+            <motion.button
+              type="button"
+              className={`btn btn-outline pd-wish-btn ${wished ? 'active' : ''}`}
+              onClick={onWish}
+              whileTap={{ scale: 0.97 }}
+              aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart size={16} fill={wished ? 'currentColor' : 'none'} /> Wishlist
+            </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {related.length > 0 && (
         <section className="pd-related">
@@ -190,8 +207,8 @@ const ProductDetail = () => {
             {related
               .filter((p) => p._id !== product._id)
               .slice(0, 4)
-              .map((p) => (
-                <ProductCard key={p._id} product={p} />
+              .map((p, i) => (
+                <ProductCard key={p._id} product={p} index={i} />
               ))}
           </div>
         </section>

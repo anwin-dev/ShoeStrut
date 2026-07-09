@@ -14,13 +14,27 @@ const api = axios.create({
   withCredentials: true,
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
       const path = window.location.pathname;
-      if (!path.startsWith('/login') && !path.startsWith('/signup') && !path.startsWith('/otp')) {
-        window.location.href = '/login';
+      const isAuthPage =
+        path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/otp');
+      if (!isAuthPage) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (!path.startsWith('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(err);

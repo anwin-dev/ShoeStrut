@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from '../api/axios';
 import ProductCard from '../components/ProductCard';
 import './Shop.css';
@@ -35,7 +36,6 @@ const Shop = () => {
         if (q) {
           const { data } = await api.post('/product/shopSearch', { search: q });
           if (!alive) return;
-          console.log('[Shop] shopSearch response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
           setPage(1);
@@ -44,19 +44,16 @@ const Shop = () => {
             params: { category },
           });
           if (!alive) return;
-          console.log('[Shop] categoryFiltering response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
         } else if (sort && sort !== 'Featured') {
           const { data } = await api.post('/product/ShopPageSort', { sortOption: sort });
           if (!alive) return;
-          console.log('[Shop] ShopPageSort response count=', Array.isArray(data) ? data.length : 0);
           setProducts(Array.isArray(data) ? data : []);
           setTotalPages(1);
         } else {
           const { data } = await api.get('/product/shop', { params: { page, limit: 8 } });
           if (!alive) return;
-          console.log('[Shop] shop response product count=', data.product?.length || 0, 'categories=', data.categories?.length || 0);
           setProducts(data.product || []);
           setCategories(data.categories || []);
           setTotalPages(data.totalPages || 1);
@@ -82,10 +79,6 @@ const Shop = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, category, q, sort]);
 
-  useEffect(() => {
-    console.log('[Shop] rendered product count=', products.length);
-  }, [products]);
-
   const activeCategoryName = useMemo(() => {
     return categories.find((c) => c._id === category)?.name;
   }, [categories, category]);
@@ -101,13 +94,17 @@ const Shop = () => {
 
   return (
     <div className="shop-page container">
-      <header className="shop-hero fade-up">
+      <motion.header
+        className="shop-hero"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <div>
           <p className="eyebrow">Collection</p>
           <h1>{q ? `Results for “${q}”` : activeCategoryName || 'All footwear'}</h1>
           <p>Find the pair that moves with you — filter by category or sort the edit.</p>
         </div>
-      </header>
+      </motion.header>
 
       <div className="shop-layout">
         <aside className="shop-filters card">
@@ -145,6 +142,7 @@ const Shop = () => {
               value={sort}
               onChange={(e) => setFilter('sort', e.target.value)}
               disabled={Boolean(q || category)}
+              aria-label="Sort products"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -169,15 +167,15 @@ const Shop = () => {
             <div className="empty-state">
               <h3>No products found</h3>
               <p>Try another search or clear filters.</p>
-              <button type="button" className="btn btn-primary" onClick={() => setSearchParams({})}>
+              <button type="button" className="btn btn-accent" onClick={() => setSearchParams({})}>
                 Reset filters
               </button>
             </div>
           ) : (
             <>
               <div className="product-grid">
-                {products.map((product) => (
-                  <ProductCard key={product._id} product={product} />
+                {products.map((product, i) => (
+                  <ProductCard key={product._id} product={product} index={i} />
                 ))}
               </div>
               {!q && !category && sort === 'Featured' && totalPages > 1 && (
@@ -190,9 +188,7 @@ const Shop = () => {
                   >
                     Previous
                   </button>
-                  <span>
-                    Page {page} of {totalPages}
-                  </span>
+                  <span>Page {page} of {totalPages}</span>
                   <button
                     type="button"
                     className="btn btn-outline"
